@@ -1,0 +1,11 @@
+photos/
+.env
+.env.*
+__pycache__/
+*.pyc
+.venv/
+.pytest_cache/
+.ruff_cache/
+*.sqlite3
+*.db
+STOP

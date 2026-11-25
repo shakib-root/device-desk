@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hall sketch draft</title>
+<style>
+body{margin:0;padding:16px;background:#FAF7F0;font-family:system-ui,sans-serif;color:#3a3631}
+main{max-width:760px;margin:0 auto}
+p{font-size:14px;color:#5f5e5a}
+</style>
+</head>
+<body>
+<main>
+<h1 style="font-size:18px;font-weight:500">Hall: approved style reference</h1>
+<p>Approved during grilling (ADR 0004). This shows the look and feel, not final art: isometric pencil sketch, the real room colours, one selectable element per Desk, State washes on the desk tops. The lounge sits back from the desks, and there's no door beside Desk 1.</p>
+<svg viewBox="0 0 680 540" width="100%" role="img" aria-label="Isometric sketch of the Hall with ten desks">
+<defs>
+<filter id="rgh"><feTurbulence type="fractalNoise" baseFrequency="0.04" numOctaves="2" seed="7"/><feDisplacementMap in="SourceGraphic" scale="2.2"/></filter>
+<pattern id="htc" width="5" height="5" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="5" height="5" fill="#F7C1C1"/><line x1="0" y1="0" x2="0" y2="5" stroke="#E24B4A" stroke-width="1.6"/></pattern>
+</defs>
+<g id="scene" filter="url(#rgh)" stroke="#3a3631" stroke-linejoin="round" stroke-linecap="round"></g>
+<g id="labels"></g>
+</svg>
+<p id="status">Click a desk to cycle free, mine, taken, blocked</p>
+</main>
+<script>
+const NS='http://www.w3.org/2000/svg',s=1.15,ox=460,oy=150,H=110,LEN=440,LY=398;
+const P=(x,y,z=0)=>[ox+(x-y)*0.866*s,oy+(x+y)*0.5*s-z*s];
+const pts=a=>a.map(p=>P(...p).map(v=>v.toFixed(1)).join(',')).join(' ');
+function add(t,a,p){const e=document.createElementNS(NS,t);for(const k in a)e.setAttribute(k,a[k]);p.appendChild(e);return e}
+const scene=document.getElementById('scene'),labels=document.getElementById('labels');
+function poly(g,a,fill,sw=1.2){return add('polygon',{points:pts(a),fill,'stroke-width':sw},g)}
+function line(g,a,b,sw=1,c){return add('line',{x1:P(...a)[0],y1:P(...a)[1],x2:P(...b)[0],y2:P(...b)[1],'stroke-width':sw,stroke:c||'#3a3631'},g)}
+function box(g,x0,x1,y0,y1,z0,z1,top,sx,sy,sw){
+ poly(g,[[x0,y1,z0],[x1,y1,z0],[x1,y1,z1],[x0,y1,z1]],sy||top,sw);
+ poly(g,[[x1,y0,z0],[x1,y1,z0],[x1,y1,z1],[x1,y0,z1]],sx||top,sw);
+ return poly(g,[[x0,y0,z1],[x1,y0,z1],[x1,y1,z1],[x0,y1,z1]],top,sw);
+}
+poly(scene,[[0,0,0],[200,0,0],[200,LEN,0],[0,LEN,0]],'#EFE6D6',1.4);
+for(let i=40;i<LEN;i+=40)line(scene,[0,i,0],[200,i,0],0.5,'#d6c8ad');
+for(let i=40;i<200;i+=40)line(scene,[i,0,0],[i,LEN,0],0.5,'#d6c8ad');
+poly(scene,[[0,0,0],[0,LEN,0],[0,LEN,H],[0,0,H]],'#A9C4D4',1.4);
+poly(scene,[[0,0,0],[200,0,0],[200,0,H],[0,0,H]],'#B9D0DD',1.4);
+[[22,94],[106,178]].forEach(([a,b])=>{poly(scene,[[a,0,14],[b,0,14],[b,0,92],[a,0,92]],'#F4F1EA',1.1);for(let x=a+6;x<b;x+=6)line(scene,[x,0,16],[x,0,90],0.4,'#b9b2a4')});
+line(scene,[14,0,96],[186,0,96],2,'#b0773c');
+box(scene,94,106,24,36,90,97,'#f2f2f2','#d9d9d9','#e6e6e6',1);
+line(scene,[200,0,0],[200,360,0],1.4);line(scene,[200,410,0],[200,LEN,0],1.4);line(scene,[0,LEN,0],[200,LEN,0],1.4);
+const items=[];
+const initial={1:'free',2:'taken',3:'mine',4:'free',5:'free',6:'taken',7:'free',8:'blocked',9:'free',10:'taken'};
+const initials={2:'RK',6:'TS',10:'NA'};
+for(let j=0;j<5;j++){const y0=58+j*54,yc=y0+25;items.push({d:14+yc,n:5-j,side:'L',y0,yc});items.push({d:186+yc,n:6+j,side:'R',y0,yc});}
+items.push({d:100+LY,lounge:true});
+items.sort((a,b)=>a.d-b.d);
+const status=document.getElementById('status');
+const order=['free','mine','taken','blocked'];
+const wash={free:'#FFFFFF',mine:'#8FDCC0',taken:'#CFCBC0',blocked:'url(#htc)'};
+const seat=['#E58A6C','#C9694B','#D47758'],wood=['#8B5A33','#7a4d2b','#8B5A33'];
+items.forEach(it=>{
+ if(it.lounge){
+  const g=add('g',{},scene),Y=LY;
+  box(g,64,68,Y-9,Y+9,16,34,...wood,1);
+  box(g,67,85,Y-9,Y+9,11,16,...seat,1);
+  add('ellipse',{cx:P(100,Y,22)[0],cy:P(100,Y,22)[1],rx:22*s*1.22,ry:22*s*0.71,fill:'#E3C08D','stroke-width':1.2},g);
+  line(g,[100,Y,0],[100,Y,21],2,'#b0773c');
+  box(g,115,133,Y-9,Y+9,11,16,...seat,1);
+  box(g,132,136,Y-9,Y+9,16,34,...wood,1);
+  box(g,91,109,Y+22,Y+40,11,16,...seat,1);
+  box(g,91,109,Y+40,Y+44,16,36,...wood,1);
+  line(g,[100,Y,H+30],[100,Y,96],0.8);
+  const c=P(100,Y,90);
+  add('path',{d:`M${c[0]-20} ${c[1]} Q${c[0]} ${c[1]-30} ${c[0]+20} ${c[1]} Z`,fill:'#E0A24A','stroke-width':1.2},g);
+  for(let k=-14;k<=14;k+=7)add('line',{x1:c[0]+k,y1:c[1]-2,x2:c[0]+k*0.6,y2:c[1]-18,stroke:'#a8702a','stroke-width':0.6},g);
+  return;
+ }
+ const {n,side,y0,yc}=it,L=side==='L';
+ const g=add('g',{style:'cursor:pointer',tabindex:0,role:'button','aria-label':'Hall, Desk '+n,'data-desk-id':'a1-d'+n},scene);
+ g.dataset.s=initial[n];
+ const dx0=L?0:172,dx1=L?28:200,lampX=L?24:176;
+ line(g,[lampX,yc,H+20],[lampX,yc,86],0.6);
+ poly(g,[[lampX-5,yc,74],[lampX+5,yc,74],[lampX,yc,86]],'#2f2f2f',1);
+ if(!L){box(g,150,152,yc-7,yc+7,18,38,'#3b3b3b','#2c2c2c','#444',1);box(g,152,166,yc-7,yc+7,15,18,'#4a4a4a','#3a3a3a','#555',1);line(g,[159,yc,0],[159,yc,15],1.2);}
+ [y0+3,y0+47].forEach(yy=>line(g,[L?25:175,yy,0],[L?25:175,yy,27],1.4,'#b0773c'));
+ const top=box(g,dx0,dx1,y0,y0+50,27,30,wash[g.dataset.s],'#e9e4da','#f1ede5',1.2);
+ const mx=L?[3,5]:[195,197];
+ box(g,mx[0],mx[1],yc-10,yc+10,31,47,'#2b2b2b','#1f1f1f','#333',1);
+ if(L){box(g,34,48,yc-7,yc+7,15,18,'#4a4a4a','#3a3a3a','#555',1);line(g,[41,yc,0],[41,yc,15],1.2);box(g,48,50,yc-7,yc+7,18,38,'#3b3b3b','#2c2c2c','#444',1);}
+ const c=P((dx0+dx1)/2,yc,30);
+ const t=add('text',{x:c[0],y:c[1]+4,'text-anchor':'middle','font-size':11,fill:'#3a3631','font-family':'system-ui,sans-serif',style:'pointer-events:none'},labels);
+ const paint=()=>{const st=g.dataset.s;top.setAttribute('fill',wash[st]);t.textContent=st==='taken'?initials[n]||'MH':st==='mine'?'You':String(n)};
+ paint();
+ const cyc=()=>{g.dataset.s=order[(order.indexOf(g.dataset.s)+1)%4];paint();status.textContent='Hall, Desk '+n+': '+g.dataset.s};
+ g.addEventListener('click',cyc);
+ g.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();cyc()}});
+});
+</script>
+</body>
+</html>
